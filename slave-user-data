@@ -96,8 +96,8 @@ coreos:
     content: |
       [Unit]
       Description=MesosSlave
-      After=docker.service
-      Requires=docker.service
+      After=consul.service
+      Requires=consul.service
 
       [Service]
       Restart=on-failure
