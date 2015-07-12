@@ -67,7 +67,6 @@ cd coreos-marathon
 API_TOKEN=YOUR_API_KEY
 PROJECT_NAME=example
 DEVICE_PREFIX=core-
-DEVICE_DOMAIN=example.org
 PLAN=baremetal_1
 FACILITY=ewr1
 OPERATING_SYSTEM=coreos_beta
