@@ -118,8 +118,8 @@ coreos:
     content: |
       [Unit]
       Description=MesosMaster
-      After=docker.service
-      Requires=docker.service
+      After=consul.service
+      Requires=consul.service
 
       [Service]
       Restart=on-failure
@@ -149,8 +149,8 @@ coreos:
     content: |
       [Unit]
       Description=Marathon
-      After=docker.service
-      Requires=docker.service
+      After=consul.service
+      Requires=consul.service
 
       [Service]
       Restart=on-failure
