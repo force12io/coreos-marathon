@@ -129,7 +129,7 @@ Cluster has been shutdown
 This template is based upon these templates.
 
 * [coreos-vagrant](https://github.com/coreos/coreos-vagrant) - Vagrant template and boxes provided by CoreOS.
-* [consul-coreos](https://github.com/democracynow/consul-coreos) - bootstraps a Consul cluster using etcd2.
+* [consul-coreos](https://github.com/democracyworks/consul-coreos) - bootstraps a Consul cluster using etcd2.
 
 ## Contributing
 
