@@ -19,8 +19,8 @@ Vagrant setup is fully working. On Packet there is a problem with Consul DNS not
 2) Clone this project.
 
 ```
-git clone https://github.com/force12/coreos-marathon/
-cd coreos-marathon
+$ git clone https://github.com/force12/coreos-marathon/
+$ cd coreos-marathon
 ```
 
 3) Startup and SSH
@@ -28,8 +28,8 @@ cd coreos-marathon
 Boxes are named core-01..03.
 
 ```
-vagrant up
-vagrant ssh core-01
+$ vagrant up
+$ vagrant ssh core-01
 ```
 
 4) Access web UIs
@@ -55,8 +55,8 @@ vagrant destroy
 2) Clone this project.
 
 ```
-git clone https://github.com/force12/coreos-marathon/
-cd coreos-marathon
+$ git clone https://github.com/force12/coreos-marathon/
+$ cd coreos-marathon
 ```
 
 3) Set API key and config.
@@ -66,19 +66,21 @@ cd coreos-marathon
 
 API_TOKEN=YOUR_API_KEY
 PROJECT_NAME=example
-DEVICE_PREFIX=core-
+DEVICE_PREFIX=core
 PLAN=baremetal_1
+# Parsippany, NJ
 FACILITY=ewr1
+# Either coreos_stable or coreos_beta
 OPERATING_SYSTEM=coreos_beta
 ```
 
 4) Start cluster of 3 physical servers running CoreOS beta.
 
 ```
-cp .env.packet .env
+$ cp .env.packet .env
 
-bundle install
-bundle exec rake packet:cluster:create
+$ bundle install
+$ bundle exec rake packet:cluster:create
 
 Cluster is being provisioned
 ```
@@ -91,7 +93,7 @@ get the public IP address of the core-01 node. The Marathon web UI is available 
 1) Shutdown server cluster.
 
 ```
-bundle exec rake packet:cluster:destroy
+$ bundle exec rake packet:cluster:destroy
 
 Cluster has been shutdown
 ```
@@ -118,14 +120,14 @@ Cluster has been shutdown
 
 ## TODO
 
-* Fix issues with Consul DNS.
-* Test with Packet Type 3 server.
-* Test with CoreOS stable.
-* Remove Zookeeper and only use Consul for service discovery.
+* Secure web UIs with SSL certificate and HTTP basic authentication.
+* Fix Consul DNS issue with fully qualified hostnames e.g. core-01.force12.io
 
 ## Thanks
 
-This template is based upon these templates.
+Thanks to [Packet](https://www.packet.net/) for the great support while we automated the cluster setup.
+
+This template is based upon these projects.
 
 * [coreos-vagrant](https://github.com/coreos/coreos-vagrant) - Vagrant template and boxes provided by CoreOS.
 * [consul-coreos](https://github.com/democracyworks/consul-coreos) - bootstraps a Consul cluster using etcd2.
