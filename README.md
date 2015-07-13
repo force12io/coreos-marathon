@@ -67,7 +67,6 @@ cd coreos-marathon
 API_TOKEN=YOUR_API_KEY
 PROJECT_NAME=example
 DEVICE_PREFIX=core-
-DEVICE_DOMAIN=example.org
 PLAN=baremetal_1
 FACILITY=ewr1
 OPERATING_SYSTEM=coreos_beta
@@ -129,7 +128,7 @@ Cluster has been shutdown
 This template is based upon these templates.
 
 * [coreos-vagrant](https://github.com/coreos/coreos-vagrant) - Vagrant template and boxes provided by CoreOS.
-* [consul-coreos](https://github.com/democracynow/consul-coreos) - bootstraps a Consul cluster using etcd2.
+* [consul-coreos](https://github.com/democracyworks/consul-coreos) - bootstraps a Consul cluster using etcd2.
 
 ## Contributing
 

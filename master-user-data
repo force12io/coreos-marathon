@@ -7,12 +7,8 @@ coreos:
     initial-advertise-peer-urls: http://$private_ipv4:2380
     listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
     listen-peer-urls: http://$private_ipv4:2380
-  fleet:
-    public-ip: $private_ipv4
   units:
   - name: etcd2.service
-    command: start
-  - name: fleet.service
     command: start
   - name: docker-tcp.socket
     command: start
@@ -65,8 +61,8 @@ coreos:
       EnvironmentFile=/etc/environment
       TimeoutStartSec=0
 
-      Environment=DOCKER_REPO=quay.io/rossf7/consul-coreos
-      Environment=VERSION=v1.2
+      Environment=DOCKER_REPO=quay.io/democracyworks/consul-coreos
+      Environment=VERSION=0.5.2
       Environment=CONTAINER=consul
 
       # make sure /etc/systemd/resolved.conf.d dir exists so we can add Consul's DNS resolver to system
@@ -122,8 +118,8 @@ coreos:
     content: |
       [Unit]
       Description=MesosMaster
-      After=docker.service
-      Requires=docker.service
+      After=consul.service
+      Requires=consul.service
 
       [Service]
       Restart=on-failure
@@ -153,8 +149,8 @@ coreos:
     content: |
       [Unit]
       Description=Marathon
-      After=docker.service
-      Requires=docker.service
+      After=consul.service
+      Requires=consul.service
 
       [Service]
       Restart=on-failure

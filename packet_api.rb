@@ -82,7 +82,7 @@ private
 
   # Provision a physical server.
   def create_device(project_id, device_num, role, token)
-    hostname = [ENV['DEVICE_PREFIX'] + '-' + device_num, ENV['DEVICE_DOMAIN']].join('.')
+    hostname = ENV['DEVICE_PREFIX'] + '-' + device_num
 
     device_config = {
       'hostname' => hostname,
