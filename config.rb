@@ -59,7 +59,7 @@ $update_channel='beta'
 # Enable NFS sharing of your home directory ($HOME) to CoreOS
 # It will be mounted at the same path in the VM as on the host.
 # Example: /Users/foobar -> /Users/foobar
-$share_home=true
+$share_home=false
 
 # Customize VMs
 #$vm_gui = false
