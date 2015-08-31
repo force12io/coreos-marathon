@@ -1,0 +1,26 @@
+[Unit]
+Description=Registrator
+After=docker.service
+Requires=docker.service
+
+[Service]
+Restart=on-failure
+RestartSec=20
+TimeoutStartSec=0
+EnvironmentFile=-/etc/environment
+ExecStartPre=-/usr/bin/docker kill registrator
+ExecStartPre=-/usr/bin/docker rm registrator
+ExecStartPre=/usr/bin/docker pull gliderlabs/registrator
+ExecStart=/usr/bin/docker run --name registrator \
+  --net=host \
+  --volume /var/run/docker.sock:/tmp/docker.sock \
+  gliderlabs/registrator \
+  --ip=${COREOS_PRIVATE_IPV4} \
+  consul:
+ExecStop=/usr/bin/docker stop registrator
+
+[Install]
+WantedBy=multi-user.target
+
+[X-Fleet]
+Global=true

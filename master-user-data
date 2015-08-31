@@ -7,169 +7,34 @@ coreos:
     initial-advertise-peer-urls: http://$private_ipv4:2380
     listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
     listen-peer-urls: http://$private_ipv4:2380
+  fleet:
+    metadata: role=mesos-master
   units:
   - name: etcd2.service
     command: start
-  - name: docker-tcp.socket
+  - name: fleet.service
     command: start
-    enable: true
+  - name: coreos-marathon.service
+    command: start
     content: |
       [Unit]
-      Description=Docker Socket for the API
-
-      [Socket]
-      ListenStream=2375
-      Service=docker.service
-      BindIPv6Only=both
-
-      [Install]
-      WantedBy=sockets.target
-  - name: zookeeper.service
-    command: start
-    runtime: true
-    content: |
-      [Unit]
-      Description=Zookeeper
+      Description=Bootstrap cluster using fleet
       After=docker.service
       Requires=docker.service
+      After=fleet.service
+      Requires=fleet.service
 
       [Service]
-      Restart=on-failure
-      RestartSec=20
-      TimeoutStartSec=0
-      ExecStartPre=-/usr/bin/docker kill zookeeper
-      ExecStartPre=-/usr/bin/docker rm zookeeper
-      ExecStartPre=/usr/bin/docker pull jplock/zookeeper
-      ExecStart=/usr/bin/sh -c "/usr/bin/docker run -p 2181:2181 --name zookeeper \
-        jplock/zookeeper"
-      ExecStop=/usr/bin/docker stop zookeeper
-
-      [Install]
-      WantedBy=multi-user.target
-  - name: consul.service
-    command: start
-    enable: true
-    content: |
-      [Unit]
-      Description=Consul
-      After=docker.service
-      Requires=docker.service
-      After=etcd2.service
-      Requires=etcd2.service
-
-      [Service]
-      EnvironmentFile=/etc/environment
-      TimeoutStartSec=0
-
-      Environment=DOCKER_REPO=quay.io/democracyworks/consul-coreos
-      Environment=VERSION=0.5.2
-      Environment=CONTAINER=consul
-
-      # make sure /etc/systemd/resolved.conf.d dir exists so we can add Consul's DNS resolver to system
-      ExecStartPre=/usr/bin/mkdir -p /etc/systemd/resolved.conf.d
-
-      ExecStartPre=-/usr/bin/docker kill ${CONTAINER}
-      ExecStartPre=-/usr/bin/docker rm ${CONTAINER}
-      ExecStartPre=-/bin/bash -c 'rm /etc/systemd/resolved.conf.d/00-consul-dns.conf && systemctl restart systemd-resolved'
-      ExecStartPre=/usr/bin/docker pull ${DOCKER_REPO}:${VERSION}
-
-      ExecStart=/bin/bash -c 'docker run --name ${CONTAINER} --restart=always \
-        --volume /var/run/docker.sock:/var/run/docker.sock --hostname %H \
-        -p 8300:8300 -p 8301:8301 -p 8301:8301/udp -p 8302:8302 -p 8302:8302/udp \
-        -p 8400:8400 -p 8500:8500 -p 53:8600/udp \
-        ${DOCKER_REPO}:${VERSION} ${COREOS_PRIVATE_IPV4} %m'
-
-      ExecStartPost=/bin/bash -c 'sleep 1; echo -e "[Resolve]\nDNS=$(docker inspect --format \'{{ .NetworkSettings.IPAddress }}\' ${CONTAINER})" > /etc/systemd/resolved.conf.d/00-consul-dns.conf && systemctl restart systemd-resolved'
-
-      ExecStop=/usr/bin/docker stop ${CONTAINER}
-      ExecStopPost=/bin/bash -c 'rm /etc/systemd/resolved.conf.d/00-consul-dns.conf && systemctl restart systemd-resolved'
-      ExecStopPost=-/usr/bin/etcdctl rm /consul.io/bootstrap/machines/%m
-
-      [Install]
-      WantedBy=multi-user.target
-  - name: registrator.service
-    command: start
-    runtime: true
-    content: |
-      [Unit]
-      Description=Registrator
-      After=docker.service
-      Requires=docker.service
-
-      [Service]
-      Restart=on-failure
-      RestartSec=20
-      TimeoutStartSec=0
-      ExecStartPre=-/usr/bin/docker kill registrator
-      ExecStartPre=-/usr/bin/docker rm registrator
-      ExecStartPre=/usr/bin/docker pull gliderlabs/registrator
-      ExecStart=/usr/bin/sh -c "/usr/bin/docker run --name registrator \
-        --net=host \
-        --volume /var/run/docker.sock:/tmp/docker.sock \
-        gliderlabs/registrator \
-        consul:"
-      ExecStop=/usr/bin/docker stop registrator
-
-      [Install]
-      WantedBy=multi-user.target
-  - name: mesos-master.service
-    command: start
-    runtime: true
-    content: |
-      [Unit]
-      Description=MesosMaster
-      After=consul.service
-      Requires=consul.service
-
-      [Service]
-      Restart=on-failure
-      RestartSec=20
-      TimeoutStartSec=0
-      EnvironmentFile=-/etc/environment
-      ExecStartPre=-/usr/bin/docker kill mesos_master
-      ExecStartPre=-/usr/bin/docker rm mesos_master
-      ExecStartPre=/usr/bin/docker pull mesosphere/mesos-master:0.20.1
+      Type=oneshot
+      ExecStartPre=-/usr/bin/docker kill bootstrap_cluster
+      ExecStartPre=-/usr/bin/docker rm bootstrap_cluster
+      ExecStartPre=/usr/bin/docker pull quay.io/rossf7/coreos-marathon:latest
       ExecStart=/usr/bin/docker run \
-          --name=mesos_master \
-          --privileged \
+          --name=bootstrap_cluster \
           --net=host \
-          mesosphere/mesos-master:0.20.1 \
-          --zk=zk://zookeeper-2181.service.consul:2181/mesos \
-          --work_dir=/var/lib/mesos/master \
-          --ip=${COREOS_PUBLIC_IPV4} \
-          --port=5050 \
-          --quorum=1
-      ExecStop=/usr/bin/docker stop mesos_master
-
-      [Install]
-      WantedBy=multi-user.target
-  - name: marathon.service
-    command: start
-    runtime: true
-    content: |
-      [Unit]
-      Description=Marathon
-      After=consul.service
-      Requires=consul.service
-
-      [Service]
-      Restart=on-failure
-      RestartSec=20
-      TimeoutStartSec=0
-      ExecStartPre=-/usr/bin/docker kill marathon
-      ExecStartPre=-/usr/bin/docker rm marathon
-      ExecStartPre=/usr/bin/docker pull mesosphere/marathon:v0.7.5
-      ExecStart=/usr/bin/docker run \
-          --name marathon \
-          -e LIBPROCESS_PORT=9090 \
-          -p 8080:8080 \
-          -p 9090:9090 \
-          mesosphere/marathon:v0.7.5 \
-          --master zk://172.17.8.101:2181/mesos \
-          --zk zk://zookeeper-2181.service.consul:2181/marathon \
-          --checkpoint \
-          --task_launch_timeout 300000
-      ExecStop=/usr/bin/docker stop marathon
+          -v /var/run/fleet.sock:/var/run/fleet.sock \
+          quay.io/rossf7/coreos-marathon:latest
+      ExecStop=/usr/bin/docker stop bootstrap_cluster
 
       [Install]
       WantedBy=multi-user.target

@@ -5,10 +5,6 @@ Create a 3 node Marathon / Mesos cluster with a single master node and 2 slave n
 * Vagrant    - 3 local VMs running CoreOS on VirtualBox or VMware Fusion.
 * Packet.net - 3 physical servers running CoreOS. You need an account with [Packet.net](https://packet.net) to do this.
 
-## WORK IN PROGRESS
-
-Vagrant setup is fully working. On Packet there is a problem with Consul DNS not starting reliably.
-
 ## Vagrant Setup
 
 1) Install dependencies
@@ -70,7 +66,7 @@ DEVICE_PREFIX=core
 PLAN=baremetal_1
 # Parsippany, NJ
 FACILITY=ewr1
-# Either coreos_stable or coreos_beta
+# Either coreos_beta or coreos_alpha
 OPERATING_SYSTEM=coreos_beta
 ```
 
@@ -98,30 +94,18 @@ $ bundle exec rake packet:cluster:destroy
 Cluster has been shutdown
 ```
 
-## Components
-
-| Name        | Role                  | Version
-| ------------|-----------------------|-------------
-| CoreOS      | Operating System      | beta channel
-| Consul      | Service Discovery     | 0.4
-| Registrator | Service Registration  | v5
-| Zookeeper   | Service Discovery     | 3.4.6
-| Mesos       | Resource Pooling      | 0.20.1
-| Marathon    | Resource Scheduling   | 0.7.5
-
 ### Bootstrapping
 
-* CoreOS cloud-config starts the etcd2 and fleet services.
-* A new discovery token is retrieved from discovery.etcd.io each time and used to form a cluster.
-* A 3 node Consul cluster is bootstrapped using etcd2.
+* A fresh discovery token is retrieved from discovery.etcd.io for each cluster.
+* CoreOS cloud-config starts etcd2 and fleet and a oneshot unit that starts the cluster.
+* A 3 node Consul cluster is bootstrapped using the etcd cluster.
 * Zookeeper is registered with Consul and accessed via the Consul DNS interface.
 * Mesos and Marathon use Zookeeper for service discovery.
-* Consul is needed because on Packet the IP address of the master node running Zookeeper is dynamic.
 
-## TODO
+## Docker Image
 
-* Secure web UIs with SSL certificate and HTTP basic authentication.
-* Fix Consul DNS issue with fully qualified hostnames e.g. core-01.force12.io
+The oneshot unit launches a Docker container using the image [quay.io/rossf7/coreos-marathon:latest](https://quay.io/repository/rossf7/coreos-marathon).
+This image is based on Alpine Linux and installs Ruby and the fleetctl binary. The container runs a Ruby script that starts the cluster using fleet.
 
 ## Thanks
 

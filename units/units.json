@@ -1,0 +1,29 @@
+{
+  "units": [
+    {
+      "name": "consul.service",
+      "start": true
+    },
+    {
+      "name": "registrator.service",
+      "start": true
+    },
+    {
+      "name": "zookeeper.service",
+      "start": true
+    },
+    {
+      "name": "mesos-master.service",
+      "start": true
+    },
+    {
+      "name": "mesos-slave@.service",
+      "start": true,
+      "instances": 2
+    },
+    {
+      "name": "marathon.service",
+      "start": true
+    }
+  ]
+}
