@@ -1,0 +1,40 @@
+[Unit]
+Description=Consul
+After=docker.service
+Requires=docker.service
+After=etcd2.service
+Requires=etcd2.service
+
+[Service]
+EnvironmentFile=/etc/environment
+TimeoutStartSec=0
+
+Environment=DOCKER_REPO=quay.io/democracyworks/consul-coreos
+Environment=VERSION=0.5.2
+Environment=CONTAINER=consul
+
+# make sure /etc/systemd/resolved.conf.d dir exists so we can add Consul's DNS resolver to system
+ExecStartPre=/usr/bin/mkdir -p /etc/systemd/resolved.conf.d
+
+ExecStartPre=-/usr/bin/docker kill ${CONTAINER}
+ExecStartPre=-/usr/bin/docker rm ${CONTAINER}
+ExecStartPre=-/bin/bash -c 'rm /etc/systemd/resolved.conf.d/00-consul-dns.conf && systemctl restart systemd-resolved'
+ExecStartPre=/usr/bin/docker pull ${DOCKER_REPO}:${VERSION}
+
+ExecStart=/bin/bash -c 'docker run --name ${CONTAINER} --restart=always \
+  --volume /var/run/docker.sock:/var/run/docker.sock --hostname %H \
+  -p 8300:8300 -p 8301:8301 -p 8301:8301/udp -p 8302:8302 -p 8302:8302/udp \
+  -p 8400:8400 -p 8500:8500 -p 53:8600/udp \
+  ${DOCKER_REPO}:${VERSION} ${COREOS_PRIVATE_IPV4} %m'
+
+ExecStartPost=/bin/bash -c 'sleep 1; echo -e "[Resolve]\nDNS=$(docker inspect --format \'{{ .NetworkSettings.IPAddress }}\' ${CONTAINER})" > /etc/systemd/resolved.conf.d/00-consul-dns.conf && systemctl restart systemd-resolved'
+
+ExecStop=/usr/bin/docker stop ${CONTAINER}
+ExecStopPost=/bin/bash -c 'rm /etc/systemd/resolved.conf.d/00-consul-dns.conf && systemctl restart systemd-resolved'
+ExecStopPost=-/usr/bin/etcdctl rm /consul.io/bootstrap/machines/%m
+
+[Install]
+WantedBy=multi-user.target
+
+[X-Fleet]
+Global=true
